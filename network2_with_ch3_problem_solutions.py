@@ -1,9 +1,9 @@
 '''This code has been modified from its original form in 
 https://github.com/MichalDanielDobrzanski/DeepLearningPython35
 with implementation of L1 regularization, early stopping in a 
-no-improvement-in-n epochs, and learning schedule.  Based on 
-the network2 program found in Neilsen's Neural Networks and 
-Deep Learning.'''
+no-improvement-in-n epochs, momentum-based gradient descent,
+ and learning schedule.  Based on the network2 program found 
+in Neilsen's Neural Networks and Deep Learning.'''
 
 
 """network2.py
@@ -166,6 +166,12 @@ class Network(object):
 
         evaluation_cost, evaluation_accuracy = [], []
         training_cost, training_accuracy = [], []
+
+        # initialization of velocity vectors for momentum-based
+        # gradient descent
+        velocity_b = [np.zeros(b.shape) for b in self.biases]
+        velocity_w = [np.zeros(w.shape) for w in self.weights]
+
         for j in range(epochs):
             random.shuffle(training_data)
             mini_batches = [
@@ -173,7 +179,7 @@ class Network(object):
                 for k in range(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.update_mini_batch(
-                    mini_batch, eta, lmbda, len(training_data))
+                    mini_batch, eta, lmbda, len(training_data), velocity_w, velocity_b)
 
             print("Epoch %s training complete" % j)
 
@@ -235,7 +241,7 @@ class Network(object):
                             
         return evaluation_cost, evaluation_accuracy, training_cost, training_accuracy
 
-    def update_mini_batch(self, mini_batch, eta, lmbda, n):
+    def update_mini_batch(self, mini_batch, eta, lmbda, n, velocity_w, velocity_b):
         """Update the network's weights and biases by applying gradient
         descent using backpropagation to a single mini batch.  The
         ``mini_batch`` is a list of tuples ``(x, y)``, ``eta`` is the
@@ -244,17 +250,26 @@ class Network(object):
         """
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
+        # sum over minibatch entries
         for x, y in mini_batch:
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
-        # L1 regularization 
-        self.weights = [w-eta*np.sign(w)*(lmbda/n)-(eta/len(mini_batch))*nw
-                        for w, nw in zip(self.weights, nabla_w)]
+        # L1 regularization alone
+        # self.weights = [w-eta*np.sign(w)*(lmbda/n)-(eta/len(mini_batch))*nw
+        #                 for w, nw in zip(self.weights, nabla_w)]
 
-        self.biases = [b-(eta/len(mini_batch))*nb
-                       for b, nb in zip(self.biases, nabla_b)]
+        # self.biases = [b-(eta/len(mini_batch))*nb
+        #                for b, nb in zip(self.biases, nabla_b)]
+
+        # momentum-based gradient descent with L1 regularization
+        mu = 0.5
+        velocity_prime_w = [mu * vw - (eta/len(mini_batch))*nw for vw, nw in zip(velocity_vw, nabla_w)]
+        velocity_prime_b = [mu * vb - (eta/len(mini_batch))*nb for vb, nb in zip(velocity_nb, nabla_b)]
+
+        self.weights = [w + vp - eta*np.sign(w)*(lmbda/n) for w, vp in zip(self.weights, velocity_prime_w)]
+        self.biases = [b + vp for b, vp in zip(self.weights, velocity_prime_b)]
 
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
@@ -377,4 +392,14 @@ def sigmoid(z):
 def sigmoid_prime(z):
     """Derivative of the sigmoid function."""
     return sigmoid(z)*(1-sigmoid(z))
+
+
+
+
+
+
+
+
+
+
 
