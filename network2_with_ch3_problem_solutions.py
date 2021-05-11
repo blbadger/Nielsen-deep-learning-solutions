@@ -250,26 +250,28 @@ class Network(object):
         """
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
+
         # sum over minibatch entries
+        lmbda = 0.1
         for x, y in mini_batch:
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
         # L1 regularization alone
-        # self.weights = [w-eta*np.sign(w)*(lmbda/n)-(eta/len(mini_batch))*nw
-        #                 for w, nw in zip(self.weights, nabla_w)]
+        self.weights = [w-eta*np.sign(w)*(lmbda/n)-(eta/len(mini_batch))*nw
+                        for w, nw in zip(self.weights, nabla_w)]
 
-        # self.biases = [b-(eta/len(mini_batch))*nb
-        #                for b, nb in zip(self.biases, nabla_b)]
+        self.biases = [b-(eta/len(mini_batch))*nb
+                       for b, nb in zip(self.biases, nabla_b)]
 
         # momentum-based gradient descent with L1 regularization
-        mu = 0.5
-        velocity_prime_w = [mu * vw - (eta/len(mini_batch))*nw for vw, nw in zip(velocity_vw, nabla_w)]
-        velocity_prime_b = [mu * vb - (eta/len(mini_batch))*nb for vb, nb in zip(velocity_nb, nabla_b)]
+        # mu = 0.5
+        # velocity_prime_w = [mu * vw - (eta/len(mini_batch))*nw for vw, nw in zip(velocity_w, nabla_w)]
+        # velocity_prime_b = [mu * vb - (eta/len(mini_batch))*nb for vb, nb in zip(velocity_b, nabla_b)]
 
-        self.weights = [w + vp - eta*np.sign(w)*(lmbda/n) for w, vp in zip(self.weights, velocity_prime_w)]
-        self.biases = [b + vp for b, vp in zip(self.weights, velocity_prime_b)]
+        # self.weights = [w + vp - eta*np.sign(w)*(lmbda/n) for w, vp in zip(self.weights, velocity_prime_w)]
+        # self.biases = [b + vp for b, vp in zip(self.weights, velocity_prime_b)]
 
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
@@ -392,6 +394,22 @@ def sigmoid(z):
 def sigmoid_prime(z):
     """Derivative of the sigmoid function."""
     return sigmoid(z)*(1-sigmoid(z))
+
+
+import mnist_loader
+training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
+
+training_data = list(training_data)
+test_data = list(test_data)
+
+network = Network([784, 50, 10])
+
+print (network.SGD(training_data, 30, 5, 4.0, test_data)) #30 epochs, minibatch size of 5
+
+
+
+
+
 
 
 

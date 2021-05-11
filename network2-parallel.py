@@ -106,17 +106,17 @@ class Network(object):
 
 	def feedforward(self, a):
 		"""Return the output of the network if ``a`` is input."""
-		for b, w in zip(self.biases, self.weights):.
+		for b, w in zip(self.biases, self.weights):
 			a = sigmoid(np.dot(w, a)+b)
 		return a
 
    
 	def SGD(self, training_data, epochs, mini_batch_size, eta,
-			_lambda = 0.0,
+			_lambda = 0.01, # define again below
 			evaluation_data=None,
 			monitor_evaluation_cost=False,
 			monitor_evaluation_accuracy=False,
-			monitor_training_cost=True,
+			monitor_training_cost=False, # not currently compatible with parallelized 
 			monitor_training_accuracy=True,
 			early_stopping_n=10,
 			learning_schedule_n=0):
@@ -141,7 +141,7 @@ class Network(object):
 		"""
 
 		 # early stopping
-		_lambda = 0.0
+		_lambda = 0.01 #_lambda becomes a generator if only defined above for some reason
 		best_accuracy = 0
 		strikes = 0
 
@@ -193,13 +193,12 @@ class Network(object):
 				accuracy = self.accuracy(evaluation_data)
 				if accuracy >= best_accuracy:
 					best_accuracy = accuracy
-					print ("Best so far, {} / {}".format(accuracy, n_data))
+					print (f"Best so far, {accuracy} / {n_data}")
 				if accuracy < best_accuracy:
 					strikes += 1
-					print ("No improvement, best so far was {} / {}".format(best_accuracy, n_data))
+					print (f"No improvement, best so far was {best_accuracy} / {n_data}")
 					if strikes == early_stopping_n:
-						print ("Stopping.  Best accuracy was {} / {} on epoch {}".format\
-							(best_accuracy, n_data, j-early_stopping_n))
+						print (f"Stopping.  Best accuracy was {best_accuracy} / {n_data} on epoch {j-early_stopping_n}")
 						return 
 
 			# learning schedule implementation:
@@ -216,10 +215,10 @@ class Network(object):
 				if accuracy < best_accuracy:
 					print ("Accuracy not improved, eta halved")
 					eta = eta / 2
-					print ("eta = {}".format(eta))
+					print (f"eta = {eta}")
 					strikes += 1
 					if strikes == learning_schedule_n:
-						print("Stopping. Best accuracy was {} / {}".format(best_accuracy, n_data))
+						print(f"Stopping. Best accuracy was {best_accuracy} / {n_data}")
 						return
 				
 		return evaluation_cost, evaluation_accuracy, training_cost, training_accuracy
@@ -245,6 +244,15 @@ class Network(object):
 
 		nabla_b = [np.zeros(b.shape) for b in self.biases]
 		nabla_w = [np.zeros(w.shape) for w in self.weights]
+
+		summed_nabla_bs = []
+		for i, layer in enumerate(delta_nabla_b):
+			s = sum(i for i in layer)
+			s = np.array([[i] for i in s])
+			summed_nabla_bs.append(s)
+
+		# reshape delta_nabla_b to match self.biases)
+		summed_nabla_bs = np.array(summed_nabla_bs)
 
 		nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, summed_nabla_bs)]
 		nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
@@ -361,6 +369,8 @@ class Network(object):
 		the validation or test data.  See comments on the similar (but
 		reversed) convention for the ``accuracy`` method, above.
 		"""
+		### not compatible with the parallelization implemented above
+		### unless the format is changed below
 		cost = 0.0
 		for x, y in data:
 			a = self.feedforward(x)
@@ -414,12 +424,12 @@ def sigmoid_prime(z):
 import mnist_loader
 training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 
-import network
 training_data = list(training_data)
+test_data = list(test_data)
 
 network = Network([784, 50, 10])
 
-print (network.SGD(training_data, 30, 5, 4.0, test_data)) #30 epochs, minibatch size of 5
+print (network.SGD(training_data, 30, 5, 4.0, evaluation_data = test_data)) #30 epochs, minibatch size of 5
 
 
 
