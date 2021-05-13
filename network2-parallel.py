@@ -112,13 +112,13 @@ class Network(object):
 
    
 	def SGD(self, training_data, epochs, mini_batch_size, eta,
-			_lambda = 0.01, # define again below
+			_lambda = 0.01, # defined below
 			evaluation_data=None,
-			monitor_evaluation_cost=False,
-			monitor_evaluation_accuracy=False,
-			monitor_training_cost=False, # not currently compatible with parallelized 
-			monitor_training_accuracy=True,
-			early_stopping_n=10,
+			monitor_evaluation_cost=True,
+			monitor_evaluation_accuracy=True,
+			monitor_training_cost=False,
+			monitor_training_accuracy=False,
+			early_stopping_n=0,
 			learning_schedule_n=0):
 
 		"""Train the neural network using mini-batch stochastic gradient
@@ -369,14 +369,12 @@ class Network(object):
 		the validation or test data.  See comments on the similar (but
 		reversed) convention for the ``accuracy`` method, above.
 		"""
-		### not compatible with the parallelization implemented above
-		### unless the format is changed below
-		cost = 0.0
+		cost = 0
 		for x, y in data:
 			a = self.feedforward(x)
 			if convert: y = vectorized_result(y)
 			cost += self.cost.fn(a, y)/len(data)
-			cost += (_lambda/len(data))*sum(np.linalg.norm(np.abs(w)) for w in self.weights) # '**' - to the power of.
+			cost += (_lambda/len(data))**sum(np.linalg.norm(np.abs(w)) for w in self.weights) # '**' - to the power of.
 		return cost
 
 	def save(self, filename):
@@ -429,7 +427,7 @@ test_data = list(test_data)
 
 network = Network([784, 50, 10])
 
-print (network.SGD(training_data, 30, 5, 4.0, evaluation_data = test_data)) #30 epochs, minibatch size of 5
+print (network.SGD(training_data, 30, 20, 0.2, evaluation_data = test_data)) # 30 epochs, minibatch size of 20, lr of 0.2
 
 
 

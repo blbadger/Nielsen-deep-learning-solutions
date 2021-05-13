@@ -350,7 +350,7 @@ class Network(object):
             a = self.feedforward(x)
             if convert: y = vectorized_result(y)
             cost += self.cost.fn(a, y)/len(data)
-            cost += (lmbda/len(data))*sum(np.linalg.norm(np.abs(w)) for w in self.weights) # '**' - to the power of.
+            cost += (lmbda/len(data))**sum(np.linalg.norm(np.abs(w)) for w in self.weights) # '**' - to the power of.
         return cost
 
     def save(self, filename):
@@ -404,7 +404,7 @@ test_data = list(test_data)
 
 network = Network([784, 50, 10])
 
-print (network.SGD(training_data, 30, 5, 4.0, test_data)) #30 epochs, minibatch size of 5
+print (network.SGD(training_data, 30, 100, 4.0, evaluation_data = test_data)) #30 epochs, minibatch size of 20
 
 
 
