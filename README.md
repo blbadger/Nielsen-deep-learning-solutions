@@ -1,4 +1,5 @@
-# Nielsen_deep_learning_problems
+# Nielsen-deep-learning-solutions
+
 Program for a neural network in Nielsen's excellent book (http://neuralnetworksanddeeplearning.com) with solutions to problems in Chapter 3, as noted.  Modified from the network2 code written by Nielsen and rewritten python3 by Dobrzanski (https://github.com/MichalDanielDobrzanski/DeepLearningPython35).
 
 General notes: network2_with_ch3_problem_solutions.py contains most modifications: early stopping, learning rate decay, L1 or L2 regularization, and an option for momentum-based gradient descent. 
